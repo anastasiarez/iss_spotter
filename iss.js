@@ -10,6 +10,9 @@
 
 
 
+
+// API Call #1: Fetch IP Address
+
 //Import the get function from the http module:
 
 const { get } = require('http');
@@ -76,6 +79,7 @@ const fetchMyIP = (callback) => {
 
 
 
+
 //API Call #2: Fetch Geo Coordinates By IP
 
 /*
@@ -128,6 +132,9 @@ const fetchCoordsByIP = (ip, callback) => {
 };
 
 
+
+// API Call #3: Fetch ISS fly over times
+
 /**
  Makes a single API request to retrieve upcoming ISS fly over times the for the given lat/lng coordinates.
  Input:
@@ -174,4 +181,38 @@ const fetchISSFlyOverTimes = function(coords, callback) {
   });
 };
 
-module.exports = { fetchMyIP, fetchCoordsByIP, fetchISSFlyOverTimes };
+
+
+// #4 - Callback Waterfall
+
+/**
+ * Orchestrates multiple API requests in order to determine the next 5 upcoming ISS fly overs for the user's current location.
+ Input:
+ - A callback with an error or results. 
+ Returns (via Callback):
+ - An error, if any (nullable)
+ - The fly-over times as an array (null if error):
+ [ { risetime: <number>, duration: <number> }, ... ]
+ */
+
+
+const nextISSTimesForMyLocation = function(callback) {
+  fetchMyIP((error, ip) => {
+    if (error) {
+      return callback(error, null);
+    }
+    fetchCoordsByIP(ip, (error, loc) => {
+      if (error) {
+        return callback(error, null);
+      }
+      fetchISSFlyOverTimes(loc, (error, nextPasses) => {
+        if (error) {
+          return callback(error, null);
+        }
+        callback(null, nextPasses);
+      });
+    });
+  });
+};
+
+module.exports = { nextISSTimesForMyLocation };
